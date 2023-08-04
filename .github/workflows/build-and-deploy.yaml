@@ -1,0 +1,49 @@
+---
+  name: Build and Deploy NextJS App to S3 and CloudFront
+  on:
+    push:
+      branches: [main]
+  # These permissions are needed to interact with GitHub's OIDC Token endpoint.
+  permissions:
+    id-token: write
+    contents: read
+  jobs:
+    build-and-deploy:
+      name: Build and Deploy
+      runs-on: ubuntu-latest
+  
+      env:
+        NEXTJS_DIST: out
+        AWS_REGION: us-east-1
+        S3_BUCKET: nextjs-s3-cloudfront-mnm
+        CLOUDFRONT_DISTRIBUTION_ID: E19M07TM9MI9FH
+  
+      steps:
+        - name: Checkout
+          uses: actions/checkout@v3
+  
+        - name: Configure AWS credentials from AWS account
+          uses: aws-actions/configure-aws-credentials@v2
+          with:
+            role-to-assume: arn:aws:iam::132930376828:role/aws-github-oidc
+            aws-region: ${{ env.AWS_REGION }}
+  
+        - name: Install Dependencies
+          run: |
+            node --version
+            npm ci --production
+            npm install @types/react 
+            npm install @types/node
+  
+        - name: Build Static Website
+          run: npm run build
+  
+        - name: Copy files to the production website with the AWS CLI
+          run: |
+            aws s3 sync --delete ${{ env.NEXTJS_DIST }} s3://${{ env.S3_BUCKET }}
+  
+        - name: Copy files to the production website with the AWS CLI
+          run: |
+            aws cloudfront create-invalidation \
+              --distribution-id ${{ env.CLOUDFRONT_DISTRIBUTION_ID }} \
+              --paths "/*"
