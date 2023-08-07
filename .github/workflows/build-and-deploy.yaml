@@ -25,7 +25,7 @@
         - name: Configure AWS credentials from AWS account
           uses: aws-actions/configure-aws-credentials@v2
           with:
-            role-to-assume: arn:aws:iam::132930376828:role/aws-github-oidc
+            role-to-assume: arn:aws:iam::132930376828:role/oidc-aws-github
             aws-region: ${{ env.AWS_REGION }}
   
         - name: Install Dependencies
